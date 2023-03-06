@@ -5,7 +5,7 @@ const cors = require('cors');
 const axios = require('axios');
 
 // Load env vars
-dotenv.config({ path: './config/config.env' });
+dotenv.config();
 
 const app = express();
 
