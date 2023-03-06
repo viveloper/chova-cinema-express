@@ -30,12 +30,15 @@ const specials = require('./routes/specials');
 const auth = require('./routes/auth');
 const user = require('./routes/user');
 
-app.use('/', (req, res) => {
-  res.json({ message: 'hello' });
+// app.use('/', (req, res) => {
+//   res.json({ message: 'hello' });
+// });
+app.use('/api/movies', (req, res) => {
+  res.json({ message: 'movies' });
 });
 
 // Mount routers
-app.use('/api/movies', movies);
+// app.use('/api/movies', movies);
 app.use('/api/review', review);
 app.use('/api/ticketing', ticketing);
 app.use('/api/carousel', carousel);
@@ -43,9 +46,9 @@ app.use('/api/specials', specials);
 app.use('/api/auth', auth);
 app.use('/api/user', user);
 
-app.get('*', (req, res) =>
-  res.sendFile(path.resolve(__dirname, 'public', 'index.html'))
-);
+// app.get('*', (req, res) =>
+//   res.sendFile(path.resolve(__dirname, 'public', 'index.html'))
+// );
 
 const PORT = process.env.PORT || 8000;
 
