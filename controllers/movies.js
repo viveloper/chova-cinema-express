@@ -14,31 +14,31 @@ exports.getMovies = async (req, res, next) => {
 
   let movies = [];
 
-  if (type === 'arte') {
-    const data = await query({
-      key: 'movies/arte',
-      url: '/data/movies/arteMovieList.json',
-    });
-    movies = data.Movies.Items;
-  } else if (type === 'opera') {
-    const data = await query({
-      key: 'movies/opera',
-      url: '/data/movies/operaMovieList.json',
-    });
-    movies = data.Movies.Items;
-  } else {
-    const data = await query({
-      key: 'movies/general',
-      url: '/data/home/movies.json',
-    });
-    movies = data.Movies.Items[0].Items;
-  }
+  // if (type === 'arte') {
+  //   const data = await query({
+  //     key: 'movies/arte',
+  //     url: '/data/movies/arteMovieList.json',
+  //   });
+  //   movies = data.Movies.Items;
+  // } else if (type === 'opera') {
+  //   const data = await query({
+  //     key: 'movies/opera',
+  //     url: '/data/movies/operaMovieList.json',
+  //   });
+  //   movies = data.Movies.Items;
+  // } else {
+  //   const data = await query({
+  //     key: 'movies/general',
+  //     url: '/data/home/movies.json',
+  //   });
+  //   movies = data.Movies.Items[0].Items;
+  // }
 
-  movies = movies
-    .filter((item) => item.RepresentationMovieCode !== 'AD')
-    .filter((item) =>
-      playing ? item.MoviePlayYN === playing.toUpperCase() : true
-    );
+  // movies = movies
+  //   .filter((item) => item.RepresentationMovieCode !== 'AD')
+  //   .filter((item) =>
+  //     playing ? item.MoviePlayYN === playing.toUpperCase() : true
+  //   );
 
   res.status(200).json(movies.slice(0, limit ?? movies.length));
 };
