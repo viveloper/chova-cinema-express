@@ -4,9 +4,10 @@ const axios = require('axios');
 const memoryData = {};
 
 exports.query = async ({ key, url }) => {
-  const { data } = await axios.get(url);
   if (memoryData[key] === undefined) {
+    const { data } = await axios.get(url);
     memoryData[key] = data;
   }
+
   return memoryData[key];
 };
