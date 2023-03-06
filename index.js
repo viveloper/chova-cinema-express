@@ -30,6 +30,10 @@ const specials = require('./routes/specials');
 const auth = require('./routes/auth');
 const user = require('./routes/user');
 
+app.use('/', (req, res) => {
+  res.json({ message: 'hello' });
+});
+
 // Mount routers
 app.use('/api/movies', movies);
 app.use('/api/review', review);
