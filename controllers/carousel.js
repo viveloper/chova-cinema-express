@@ -10,11 +10,15 @@ exports.getCarousel = async (req, res, next) => {
     url: `/data/home/carouseItems.json`,
   });
 
-  res.status(200).json(
-    data.map((item) => ({
-      ...item,
-      img: getS3FullPath(item.img),
-      video: getS3FullPath(item.video),
-    }))
-  );
+  switch (req.query.use) {
+    case 'home':
+      res.status(200).json(data.filter((item) => item.use === 'home'));
+      break;
+    case 'movie':
+      res.status(200).json(data.filter((item) => item.use === 'movie'));
+      break;
+    default:
+      res.status(200).json(data);
+      break;
+  }
 };

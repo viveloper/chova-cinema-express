@@ -6,50 +6,41 @@ const { getS3FullPath } = require('../utils');
 // @route   GET /api/movies
 // @access  Public
 exports.getMovies = async (req, res, next) => {
-  let result = [];
+  const type = req.query.type;
+  const playing = req.query.playing;
+  const limit = isNaN(Number(req.query.limit))
+    ? undefined
+    : Number(req.query.limit);
 
-  if (req.query.type === 'current') {
-    const movies = await query({
-      key: 'movies/current',
-      url: '/data/home/movies.json',
-    });
-    result = movies.Movies.Items[0].Items.filter(
-      (item) => item.MoviePlayYN === 'Y'
-    );
-  } else if (req.query.type === 'pre') {
-    const movies = await query({
-      key: 'movies/pre',
-      url: '/data/home/movies.json',
-    });
-    result = movies.Movies.Items[0].Items.filter(
-      (item) => item.MoviePlayYN === 'N'
-    );
-  } else if (req.query.type === 'arte') {
-    const movies = await query({
+  let movies = [];
+
+  if (type === 'arte') {
+    const data = await query({
       key: 'movies/arte',
       url: '/data/movies/arteMovieList.json',
     });
-    result = movies.Movies.Items;
-  } else if (req.query.type === 'opera') {
-    const movies = await query({
+    movies = data.Movies.Items;
+  } else if (type === 'opera') {
+    const data = await query({
       key: 'movies/opera',
       url: '/data/movies/operaMovieList.json',
     });
-    result = movies.Movies.Items;
+    movies = data.Movies.Items;
   } else {
-    const movies = await query({
-      key: 'movies',
+    const data = await query({
+      key: 'movies/general',
       url: '/data/home/movies.json',
     });
-    result = movies.Movies.Items[0].Items;
+    movies = data.Movies.Items[0].Items;
   }
 
-  res.status(200).json(
-    result.map((movie) => ({
-      ...movie,
-      PosterURL: getS3FullPath(movie.PosterURL),
-    }))
-  );
+  movies = movies
+    .filter((item) => item.RepresentationMovieCode !== 'AD')
+    .filter((item) =>
+      playing ? item.MoviePlayYN === playing.toUpperCase() : true
+    );
+
+  res.status(200).json(movies.slice(0, limit ?? movies.length));
 };
 
 // @desc    Get movie detail
