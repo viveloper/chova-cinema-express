@@ -29,7 +29,7 @@ exports.getMovies = async (req, res, next) => {
   } else {
     const data = await query({
       key: 'movies/general',
-      url: 'https://chova-cinema.s3.ap-northeast-2.amazonaws.com/data/home/movies.json',
+      url: '/data/home/movies.json',
     });
     movies = data.Movies.Items[0].Items;
   }
