@@ -5,7 +5,7 @@ const router = express.Router();
 
 // router.route('/').get(getMovies);
 router.route('/').get((res, req) => {
-  res.status(200).json({ message: 'movies' });
+  res.json({ message: 'movies' });
 });
 router.route('/:movieCode').get(getMovieDetail);
 
