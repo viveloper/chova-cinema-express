@@ -33,12 +33,12 @@ const user = require('./routes/user');
 // app.use('/', (req, res) => {
 //   res.json({ message: 'hello' });
 // });
-app.use('/api/movies', (req, res) => {
-  res.json({ message: 'movies' });
-});
+// app.use('/api/movies', (req, res) => {
+//   res.json({ message: 'movies' });
+// });
 
 // Mount routers
-// app.use('/api/movies', movies);
+app.use('/api/movies', movies);
 app.use('/api/review', review);
 app.use('/api/ticketing', ticketing);
 app.use('/api/carousel', carousel);
