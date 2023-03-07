@@ -1,6 +1,4 @@
-const immer = require('immer');
 const { query } = require('../api');
-const { getS3FullPath } = require('../utils');
 
 // @desc    Get movies
 // @route   GET /api/movies
@@ -49,21 +47,20 @@ exports.getMovies = async (req, res, next) => {
 exports.getMovieDetail = async (req, res, next) => {
   const movieCode = req.params.movieCode;
 
-  const movieDetail = await query({
-    key: `movieDetail/${movieCode}`,
-    url: `/data/movieDetail/${movieCode}.json`,
-  });
-
-  const newMovieDetail = immer.produce(movieDetail, (draft) => {
-    draft.Casting.Items.forEach((item) => {
-      item.StaffImage = getS3FullPath(item.StaffImage);
+  if (movieCode) {
+    const data = await query({
+      key: `movieDetail/${movieCode}`,
+      url: `/data/movieDetail/${movieCode}.json`,
     });
-    draft.Movie.PosterURL = getS3FullPath(draft.Movie.PosterURL);
-    draft.Trailer.Items.forEach((item) => {
-      item.ImageURL = getS3FullPath(item.ImageURL);
-      item.MediaURL = getS3FullPath(item.MediaURL);
-    });
-  });
 
-  res.status(200).json(newMovieDetail);
+    res.status(200).json({
+      movieDetail: data.Movie,
+      casting: data.Casting.Items,
+      trailer: data.Trailer.Items,
+    });
+  } else {
+    res.status(400).json({
+      message: 'required movieCode.',
+    });
+  }
 };

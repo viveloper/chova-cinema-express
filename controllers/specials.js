@@ -4,10 +4,10 @@ const { query } = require('../api');
 // @route   GET /api/specials
 // @access  Public
 exports.getSpecials = async (req, res, next) => {
-  const specials = await query({
+  const data = await query({
     key: 'specials',
     url: `/data/home/cinemaData.json`,
   });
 
-  res.status(200).json(specials);
+  res.status(200).json(data.Items);
 };
