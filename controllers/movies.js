@@ -45,7 +45,7 @@ exports.getMovies = async (req, res, next) => {
     movies = [
       ...general.Movies.Items[0].Items,
       ...arte.Movies.Items,
-      opera.Movies.Items,
+      ...opera.Movies.Items,
     ];
   }
 
