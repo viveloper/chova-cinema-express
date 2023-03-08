@@ -11,8 +11,13 @@ exports.getMovies = async (req, res, next) => {
     : Number(req.query.limit);
 
   let movies = [];
-
-  if (type === 'arte') {
+  if (type === 'general') {
+    const data = await query({
+      key: 'movies/general',
+      url: '/data/home/movies.json',
+    });
+    movies = data.Movies.Items[0].Items;
+  } else if (type === 'arte') {
     const data = await query({
       key: 'movies/arte',
       url: '/data/movies/arteMovieList.json',
@@ -25,11 +30,23 @@ exports.getMovies = async (req, res, next) => {
     });
     movies = data.Movies.Items;
   } else {
-    const data = await query({
+    const general = await query({
       key: 'movies/general',
       url: '/data/home/movies.json',
     });
-    movies = data.Movies.Items[0].Items;
+    const arte = await query({
+      key: 'movies/arte',
+      url: '/data/movies/arteMovieList.json',
+    });
+    const opera = await query({
+      key: 'movies/opera',
+      url: '/data/movies/operaMovieList.json',
+    });
+    movies = [
+      ...general.Movies.Items[0].Items,
+      ...arte.Movies.Items,
+      opera.Movies.Items,
+    ];
   }
 
   movies = movies

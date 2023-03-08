@@ -39,9 +39,10 @@ app.use('/api/specials', specials);
 app.use('/api/auth', auth);
 app.use('/api/user', user);
 
-app.get('*', (req, res) =>
-  res.sendFile(path.resolve(__dirname, 'public', 'index.html'))
-);
+// for SPA hosting
+// app.get('*', (req, res) =>
+//   res.sendFile(path.resolve(__dirname, 'public', 'index.html'))
+// );
 
 const PORT = process.env.PORT || 8000;
 
