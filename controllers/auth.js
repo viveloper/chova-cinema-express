@@ -3,10 +3,10 @@ const jwt = require('jsonwebtoken');
 const { getRandomInt } = require('../utils');
 const { query } = require('../api');
 
-// @desc    Signin user
-// @route   POST /api/auth/signin
+// @desc    Sign up user
+// @route   POST /api/auth/signup
 // @access  Public
-exports.signin = async (req, res, next) => {
+exports.signup = async (req, res, next) => {
   const { name, email, password, confirmPassword } = req.body;
   const usersData = await query({
     key: 'users',
