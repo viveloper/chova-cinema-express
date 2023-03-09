@@ -20,9 +20,9 @@ exports.getReview = async (req, res, next) => {
     TotalReviewItems: {
       ...review.TotalReviewItems,
       Items:
-        sortType === 'recent'
+        sortType === 'recent' || sortType !== 'like'
           ? review.TotalReviewItems.Items
-          : review.TotalReviewItems.Items.sort(
+          : [...review.TotalReviewItems.Items].sort(
               (a, b) => b.RecommandCount - a.RecommandCount
             ),
     },
@@ -54,7 +54,14 @@ exports.getReview = async (req, res, next) => {
     },
   };
 
-  res.status(200).json(pagedReview);
+  const transPagedReview = {
+    reviewList: pagedReview.TotalReviewItems.Items,
+    pageCount: pagedReview.TotalReviewItems.ItemCount,
+    totalCount: pagedReview.ReviewCounts.TotalReviewCount,
+    avgScore: pagedReview.ReviewCounts.MarkAvg,
+  };
+
+  res.status(200).json(transPagedReview);
 };
 
 // @desc    Post review
