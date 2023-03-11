@@ -6,8 +6,16 @@ const { query } = require('../api');
 // @access  Public
 exports.getReview = async (req, res, next) => {
   const movieCode = req.query.movieCode;
-  const page = req.query.page ? req.query.page : 1;
-  const count = req.query.count ? req.query.count : 10;
+  const page = req.query.page
+    ? !isNaN(Number(req.query.page))
+      ? Number(req.query.page)
+      : 1
+    : 1;
+  const count = req.query.count
+    ? !isNaN(Number(req.query.count))
+      ? Number(req.query.count)
+      : 10
+    : 10;
   const sortType = req.query.sortType ? req.query.sortType : 'recent';
 
   const review = await query({
@@ -55,6 +63,7 @@ exports.getReview = async (req, res, next) => {
   };
 
   const transPagedReview = {
+    page,
     reviewList: pagedReview.TotalReviewItems.Items,
     pageCount: pagedReview.TotalReviewItems.ItemCount,
     totalCount: pagedReview.ReviewCounts.TotalReviewCount,
