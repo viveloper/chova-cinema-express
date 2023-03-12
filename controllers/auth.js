@@ -88,7 +88,6 @@ exports.login = async (req, res, next) => {
   const token = getToken({ id: user.id, name: user.name, email: user.email });
 
   res.status(200).json({
-    success: true,
     token,
     user: {
       id: user.id,

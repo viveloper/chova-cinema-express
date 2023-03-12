@@ -74,10 +74,10 @@ exports.getReview = async (req, res, next) => {
 };
 
 // @desc    Post review
-// @route   GET /api/review
+// @route   POST /api/review
 // @access  Private
 exports.addReview = async (req, res, next) => {
-  const { movieCode, reviewText, evaluation } = req.body;
+  const { movieCode, text, score } = req.body;
   const loginUser = req.user;
 
   const reviewData = await query({
@@ -90,7 +90,6 @@ exports.addReview = async (req, res, next) => {
   );
   if (userReview) {
     return res.status(409).json({
-      success: false,
       message: '실관람평이 존재합니다. 확인해주세요.',
     });
   }
@@ -102,9 +101,9 @@ exports.addReview = async (req, res, next) => {
     MemberNo: parseInt(loginUser.id),
     MemberID: loginUser.id,
     MemberName: loginUser.name,
-    ReviewText: reviewText,
+    ReviewText: text,
     MoviePlayYN: '',
-    Evaluation: evaluation,
+    Evaluation: score,
     RecommandCount: 0,
     MovieViewYN: '',
     RepresentationMovieCode: movieCode,
@@ -137,11 +136,11 @@ exports.addReview = async (req, res, next) => {
 
   targetUser.reviewList.push(reviewId);
 
-  res.status(200).json({ success: true, review: newReview });
+  res.status(200).json(newReview);
 };
 
 // @desc    Delete review
-// @route   DELETE /api/review
+// @route   DELETE /api/review/:reviewId
 // @access  Private
 exports.deleteReview = async (req, res, next) => {
   const reviewId = parseInt(req.params.reviewId);
@@ -189,7 +188,7 @@ exports.deleteReview = async (req, res, next) => {
     (item) => item !== reviewId
   );
 
-  res.status(200).json({ success: true, review: targetReview });
+  res.status(200).json(targetReview);
 };
 
 // @desc    Edit review
@@ -197,7 +196,7 @@ exports.deleteReview = async (req, res, next) => {
 // @access  Private
 exports.editReview = async (req, res, next) => {
   const reviewId = parseInt(req.params.reviewId);
-  const { movieCode, reviewText, evaluation, recommend } = req.body;
+  const { movieCode, text, score, toggleLike } = req.body;
 
   const reviewData = await query({
     key: `review/${movieCode}`,
@@ -208,9 +207,9 @@ exports.editReview = async (req, res, next) => {
     (item) => item.ReviewID === reviewId
   );
 
-  targetReview.ReviewText = reviewText ? reviewText : targetReview.ReviewText;
-  targetReview.Evaluation = evaluation ? evaluation : targetReview.Evaluation;
-  if (recommend) {
+  targetReview.ReviewText = text ? text : targetReview.ReviewText;
+  targetReview.Evaluation = score ? score : targetReview.Evaluation;
+  if (toggleLike) {
     const loginUser = req.user;
 
     const usersData = await query({
