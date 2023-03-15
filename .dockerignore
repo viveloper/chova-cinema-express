@@ -1,2 +1,5 @@
 node_modules
+backup_resources
+data_dump
 npm-debug.log
+vercel.json
