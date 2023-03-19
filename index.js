@@ -3,6 +3,7 @@ const path = require('path');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const axios = require('axios');
+const { connectDB } = require('./config/db.js');
 
 // Load env vars
 dotenv.config();
@@ -20,6 +21,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // axios config
 axios.defaults.baseURL = process.env.S3_BASE_URL;
+
+// Connect Database
+connectDB();
 
 // Route files
 const movies = require('./routes/movies');
