@@ -63,9 +63,9 @@ exports.getMovieDetail = async (req, res, next) => {
   const movieCode = req.params.movieCode;
 
   if (movieCode) {
-    const movies = await Movie.find({ RepresentationMovieCode: movieCode })
-      .select('-Review')
-      .exec();
+    const movies = await Movie.find({
+      RepresentationMovieCode: movieCode,
+    }).exec();
     if (!movies.length) {
       return res.status(404).json({
         message: 'Not Found.',

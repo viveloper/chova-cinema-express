@@ -301,17 +301,6 @@ const movieSchema = mongoose.Schema({
   Trailer: {
     type: ['Mixed'],
   },
-  Review: {
-    Items: {
-      type: ['Mixed'],
-    },
-    TotalReviewCount: {
-      type: 'Number',
-    },
-    MarkAvg: {
-      type: 'Number',
-    },
-  },
 });
 
 const Movie = mongoose.model('Movie', movieSchema);
