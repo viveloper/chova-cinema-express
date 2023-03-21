@@ -1,5 +1,6 @@
 const { getRandomInt } = require('../utils');
 const { query } = require('../api');
+const Review = require('../models/reviewModel.js');
 
 // @desc    Get review
 // @route   GET /api/review
@@ -18,59 +19,46 @@ exports.getReview = async (req, res, next) => {
     : 10;
   const sortType = req.query.sortType ? req.query.sortType : 'recent';
 
-  const review = await query({
-    key: `review/${movieCode}`,
-    url: `/data/movieDetail/${movieCode}-review.json`,
-  });
+  const reviews = await Review.find({ RepresentationMovieCode: movieCode })
+    .select(
+      'ReviewID MemberID MemberName ReviewText Evaluation RecommandCount RepresentationMovieCode RegistDate MemberNickName'
+    )
+    .sort(sortType === 'like' ? { RecommandCount: -1 } : {})
+    .skip((page - 1) * count)
+    .limit(count)
+    .exec();
 
-  const sortedReview = {
-    ...review,
-    TotalReviewItems: {
-      ...review.TotalReviewItems,
-      Items:
-        sortType === 'recent' || sortType !== 'like'
-          ? review.TotalReviewItems.Items
-          : [...review.TotalReviewItems.Items].sort(
-              (a, b) => b.RecommandCount - a.RecommandCount
-            ),
-    },
-  };
+  const totalCount = await Review.find({
+    RepresentationMovieCode: movieCode,
+  }).count();
+
+  const aggregatedReviews = await Review.aggregate()
+    .match({ RepresentationMovieCode: movieCode })
+    .group({
+      _id: '$RepresentationMovieCode',
+      scoreAvg: { $avg: '$Evaluation' },
+    })
+    .exec();
 
   const loginUser = req.user;
   if (loginUser) {
-    const userReview = sortedReview.TotalReviewItems.Items.find(
-      (item) => item.MemberID === loginUser.id
+    const userReview = reviews.find(
+      (review) => review.MemberID === loginUser.id
     );
     if (userReview) {
-      const idx = sortedReview.TotalReviewItems.Items.indexOf(userReview);
-      sortedReview.TotalReviewItems.Items.splice(idx, 1);
-      sortedReview.TotalReviewItems.Items.unshift(userReview);
+      const idx = reviews.indexOf(userReview);
+      reviews.splice(idx, 1);
+      reviews.unshift(userReview);
     }
   }
 
-  const begin = count * (page - 1);
-  const end =
-    count * page < sortedReview.TotalReviewItems.Items.length
-      ? count * page
-      : sortedReview.TotalReviewItems.Items.length;
-  const pagedReview = {
-    ...sortedReview,
-    TotalReviewItems: {
-      ...sortedReview.TotalReviewItems,
-      Items: sortedReview.TotalReviewItems.Items.slice(begin, end),
-      ItemCount: end - begin,
-    },
-  };
-
-  const transPagedReview = {
+  res.status(200).json({
     page,
-    reviewList: pagedReview.TotalReviewItems.Items,
-    pageCount: pagedReview.TotalReviewItems.ItemCount,
-    totalCount: pagedReview.ReviewCounts.TotalReviewCount,
-    avgScore: pagedReview.ReviewCounts.MarkAvg,
-  };
-
-  res.status(200).json(transPagedReview);
+    reviews,
+    pageCount: reviews.length,
+    totalCount,
+    scoreAvg: Number(aggregatedReviews[0].scoreAvg.toFixed(1)),
+  });
 };
 
 // @desc    Post review
