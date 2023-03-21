@@ -1,4 +1,3 @@
-const { query } = require('../api');
 const User = require('../models/userModel.js');
 
 // @desc    Get user data

@@ -1,19 +1,17 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { getRandomInt } = require('../utils');
-const { query } = require('../api');
+const User = require('../models/userModel.js');
 
 // @desc    Sign up user
 // @route   POST /api/auth/signup
 // @access  Public
 exports.signup = async (req, res, next) => {
   const { name, email, password, confirmPassword } = req.body;
-  const usersData = await query({
-    key: 'users',
-    url: `/data/users/users.json`,
-  });
 
-  if (usersData.users.find((user) => user.email === email)) {
+  const userExists = await User.findOne({ email });
+
+  if (userExists) {
     return res.status(400).json({
       success: false,
       message: '이미 가입된 이메일입니다.',
@@ -26,34 +24,35 @@ exports.signup = async (req, res, next) => {
     });
   }
 
-  const salt = await bcrypt.genSalt(10);
-  const hash = await bcrypt.hash(password, salt);
-  const id = getRandomInt(100000000, 1000000000).toString();
-
-  usersData.users.push({
-    id,
+  const user = await User.create({
+    id: getRandomInt(100000000, 1000000000).toString(),
     name,
     email,
-    password: hash,
+    password,
     reviewList: [],
     reviewLikeList: [],
     ticketingList: [],
   });
 
-  const token = getToken({ id, name, email });
-
-  res.status(200).json({
-    success: true,
-    token,
-    user: {
-      id,
-      name,
-      email,
-      reviewList: [],
-      reviewLikeList: [],
-      ticketingList: [],
-    },
-  });
+  if (user) {
+    return res.status(201).json({
+      success: true,
+      token: getToken({ id: user.id, name: user.name, email: user.email }),
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        reviewList: user.reviewList,
+        reviewLikeList: user.reviewLikeList,
+        ticketingList: user.ticketingList,
+      },
+    });
+  } else {
+    return res.status(400).json({
+      success: false,
+      message: '입력값이 유효하지 않습니다.',
+    });
+  }
 };
 
 // @desc    Login user
@@ -62,12 +61,8 @@ exports.signup = async (req, res, next) => {
 exports.login = async (req, res, next) => {
   const { email, password } = req.body;
 
-  const usersData = await query({
-    key: 'users',
-    url: `/data/users/users.json`,
-  });
-
-  const user = usersData.users.find((user) => user.email === email);
+  const users = await User.find({ email }).exec();
+  const user = users[0];
 
   if (!email || !password)
     return res.status(400).json({
