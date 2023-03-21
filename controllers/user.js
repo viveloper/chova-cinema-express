@@ -1,4 +1,5 @@
 const { query } = require('../api');
+const User = require('../models/userModel.js');
 
 // @desc    Get user data
 // @route   GET /api/user
@@ -6,13 +7,10 @@ const { query } = require('../api');
 exports.getUser = async (req, res, next) => {
   const userId = req.user.id;
 
-  const usersData = await query({
-    key: 'users',
-    url: `/data/users/users.json`,
-  });
+  const users = await User.find({ id: userId }).exec();
 
   const { id, name, email, reviewList, reviewLikeList, ticketingList } =
-    usersData.users.find((user) => user.id === userId);
+    users[0];
 
   res.status(200).json({
     id,
