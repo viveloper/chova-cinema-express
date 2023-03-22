@@ -13,13 +13,11 @@ exports.signup = async (req, res, next) => {
 
   if (userExists) {
     return res.status(400).json({
-      success: false,
       message: '이미 가입된 이메일입니다.',
     });
   }
   if (password !== confirmPassword) {
     return res.status(400).json({
-      success: false,
       message: '두 비밀번호가 일치하지 않습니다.',
     });
   }
@@ -36,7 +34,6 @@ exports.signup = async (req, res, next) => {
 
   if (user) {
     return res.status(201).json({
-      success: true,
       token: getToken({ id: user.id, name: user.name, email: user.email }),
       user: {
         id: user.id,
@@ -49,7 +46,6 @@ exports.signup = async (req, res, next) => {
     });
   } else {
     return res.status(400).json({
-      success: false,
       message: '입력값이 유효하지 않습니다.',
     });
   }
@@ -66,17 +62,14 @@ exports.login = async (req, res, next) => {
 
   if (!email || !password)
     return res.status(400).json({
-      success: false,
       message: '이메일과 비밀번호를 입력하세요.',
     });
   if (!user)
     return res.status(401).json({
-      success: false,
       message: '존재하지 않는 이메일입니다.',
     });
   if (!(await matchPassword(password, user.password)))
     return res.status(401).json({
-      success: false,
       message: '잘못된 비밀번호입니다.',
     });
 
