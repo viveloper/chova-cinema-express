@@ -19,6 +19,12 @@ exports.getReview = async (req, res, next) => {
     : 10;
   const sortType = req.query.sortType ? req.query.sortType : 'recent';
 
+  if (!movieCode) {
+    return res.status(400).json({
+      message: 'Missing required parameter: movieCode',
+    });
+  }
+
   const reviews = await Review.find({ RepresentationMovieCode: movieCode })
     .select(
       'ReviewID MemberID MemberName ReviewText Evaluation RecommandCount RepresentationMovieCode RegistDate MemberNickName'
@@ -28,15 +34,12 @@ exports.getReview = async (req, res, next) => {
     .limit(count)
     .exec();
 
-  const totalCount = await Review.find({
-    RepresentationMovieCode: movieCode,
-  }).count();
-
   const aggregatedReviews = await Review.aggregate()
     .match({ RepresentationMovieCode: movieCode })
     .group({
       _id: '$RepresentationMovieCode',
       scoreAvg: { $avg: '$Evaluation' },
+      totalCount: { $sum: 1 },
     })
     .exec();
 
@@ -56,7 +59,7 @@ exports.getReview = async (req, res, next) => {
     page,
     reviews,
     pageCount: reviews.length,
-    totalCount,
+    totalCount: aggregatedReviews[0].totalCount,
     scoreAvg: Number(aggregatedReviews[0].scoreAvg.toFixed(1)),
   });
 };
