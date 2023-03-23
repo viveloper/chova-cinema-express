@@ -76,7 +76,6 @@ exports.addReview = async (req, res, next) => {
   const { movieCode, text, score } = req.body;
   const loginUser = req.user;
 
-  //
   const reviewExists = await Review.findOne({
     RepresentationMovieCode: movieCode,
     MemberID: loginUser.id,
@@ -127,51 +126,28 @@ exports.addReview = async (req, res, next) => {
 // @access  Private
 exports.deleteReview = async (req, res, next) => {
   const reviewId = parseInt(req.params.reviewId);
-  const { movieCode } = req.body;
   const loginUser = req.user;
 
-  const reviewData = await query({
-    key: `review/${movieCode}`,
-    url: `/data/movieDetail/${movieCode}-review.json`,
-  });
+  const targetReview = await Review.findOneAndDelete({ ReviewID: reviewId });
+  if (!targetReview) {
+    return res.status(404).json({
+      message: 'Not Found.',
+    });
+  }
 
-  const targetReview = reviewData.TotalReviewItems.Items.find(
-    (item) => item.ReviewID === reviewId
-  );
   if (targetReview.MemberID !== loginUser.id) {
     return res.status(401).json({
-      success: false,
       message: 'Not authorized user',
     });
   }
 
-  const idx = reviewData.TotalReviewItems.Items.indexOf(targetReview);
-  reviewData.TotalReviewItems.Items.splice(idx, 1);
-  const reviewCount = reviewData.TotalReviewItems.Items.length;
-  reviewData.TotalReviewItems.ItemCount = reviewCount;
-  reviewData.ReviewCounts.RealReviewCount = reviewCount;
-  reviewData.ReviewCounts.TotalReviewCount = reviewCount;
-  reviewData.ReviewCounts.MarkAvg = Math.floor(
-    reviewData.TotalReviewItems.Items.reduce(
-      (acc, review) => acc + review.Evaluation,
-      0
-    ) / reviewCount
-  );
-
-  const usersData = await query({
-    key: 'users',
-    url: '/data/users/users.json',
-  });
-
-  const targetUser = usersData.users.find(
-    (user) => user.email === loginUser.email
-  );
-
+  const targetUser = await User.findOne({ id: loginUser.id });
   targetUser.reviewList = targetUser.reviewList.filter(
-    (item) => item !== reviewId
+    (review) => review !== targetReview.ReviewID
   );
+  await targetUser.save();
 
-  res.status(200).json(targetReview);
+  return res.status(200).json(targetReview);
 };
 
 // @desc    Edit review
