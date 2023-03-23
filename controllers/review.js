@@ -98,7 +98,7 @@ exports.addReview = async (req, res, next) => {
   const maxReviewId = aggregatedReviews[0].maxReviewId;
   const newReivewId = maxReviewId + 1;
 
-  const newReview = new Review({
+  const createdReview = await Review.create({
     ReviewID: newReivewId,
     MemberNo: parseInt(loginUser.id),
     MemberID: loginUser.id,
@@ -114,8 +114,6 @@ exports.addReview = async (req, res, next) => {
     ProfilePhoto: '',
     MemberNickName: '',
   });
-
-  const createdReview = await newReview.save();
 
   const targetUser = await User.findOne({ id: loginUser.id });
   targetUser.reviewList = [...targetUser.reviewList, createdReview.ReviewID];
