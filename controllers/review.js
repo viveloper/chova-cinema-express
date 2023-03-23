@@ -160,12 +160,6 @@ exports.editReview = async (req, res, next) => {
 
   const targetReview = await Review.findOne({ ReviewID: reviewId });
 
-  if (targetReview.MemberID !== loginUser.id) {
-    return res.status(401).json({
-      message: 'Not authorized user',
-    });
-  }
-
   targetReview.ReviewText = text ? text : targetReview.ReviewText;
   targetReview.Evaluation = score ? score : targetReview.Evaluation;
 
