@@ -29,7 +29,7 @@ exports.getReview = async (req, res, next) => {
     .select(
       'ReviewID MemberID MemberName ReviewText Evaluation RecommandCount RepresentationMovieCode RegistDate MemberNickName'
     )
-    .sort(sortType === 'like' ? { RecommandCount: -1 } : {})
+    .sort(sortType === 'like' ? { RecommandCount: -1 } : { ReviewID: -1 })
     .skip((page - 1) * count)
     .limit(count)
     .exec();
@@ -85,6 +85,7 @@ exports.addReview = async (req, res, next) => {
     });
   }
 
+  // TODO: 마지막 리뷰 아이디보다 큰 수가 되도록 지정 ($max (aggregation))
   const reviewId = getRandomInt(10000000, 1000000000);
 
   const newReview = {
