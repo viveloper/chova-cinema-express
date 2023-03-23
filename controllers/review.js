@@ -1,6 +1,7 @@
 const { getRandomInt } = require('../utils');
 const { query } = require('../api');
 const Review = require('../models/reviewModel.js');
+const User = require('../models/userModel.js');
 
 // @desc    Get review
 // @route   GET /api/review
@@ -59,8 +60,12 @@ exports.getReview = async (req, res, next) => {
     page,
     reviews,
     pageCount: reviews.length,
-    totalCount: aggregatedReviews[0].totalCount,
-    scoreAvg: Number(aggregatedReviews[0].scoreAvg.toFixed(1)),
+    totalCount:
+      aggregatedReviews.length === 0 ? 0 : aggregatedReviews[0].totalCount,
+    scoreAvg:
+      aggregatedReviews.length === 0
+        ? 0
+        : Number(aggregatedReviews[0].scoreAvg.toFixed(1)),
   });
 };
 
@@ -71,25 +76,30 @@ exports.addReview = async (req, res, next) => {
   const { movieCode, text, score } = req.body;
   const loginUser = req.user;
 
-  const reviewData = await query({
-    key: `review/${movieCode}`,
-    url: `/data/movieDetail/${movieCode}-review.json`,
+  //
+  const reviewExists = await Review.findOne({
+    RepresentationMovieCode: movieCode,
+    MemberID: loginUser.id,
   });
 
-  const userReview = reviewData.TotalReviewItems.Items.find(
-    (item) => item.MemberID === loginUser.id
-  );
-  if (userReview) {
+  if (reviewExists) {
     return res.status(409).json({
       message: '실관람평이 존재합니다. 확인해주세요.',
     });
   }
 
-  // TODO: 마지막 리뷰 아이디보다 큰 수가 되도록 지정 ($max (aggregation))
-  const reviewId = getRandomInt(10000000, 1000000000);
+  const aggregatedReviews = await Review.aggregate()
+    .group({
+      _id: null,
+      maxReviewId: { $max: '$ReviewID' },
+    })
+    .exec();
 
-  const newReview = {
-    ReviewID: reviewId,
+  const maxReviewId = aggregatedReviews[0].maxReviewId;
+  const newReivewId = maxReviewId + 1;
+
+  const newReview = new Review({
+    ReviewID: newReivewId,
     MemberNo: parseInt(loginUser.id),
     MemberID: loginUser.id,
     MemberName: loginUser.name,
@@ -103,32 +113,15 @@ exports.addReview = async (req, res, next) => {
     RegistDate: new Date().toISOString().slice(0, 10).split('-').join('.'),
     ProfilePhoto: '',
     MemberNickName: '',
-  };
-
-  reviewData.TotalReviewItems.Items.unshift(newReview);
-  const reviewCount = reviewData.TotalReviewItems.Items.length;
-  reviewData.TotalReviewItems.ItemCount = reviewCount;
-  reviewData.ReviewCounts.RealReviewCount = reviewCount;
-  reviewData.ReviewCounts.TotalReviewCount = reviewCount;
-  reviewData.ReviewCounts.MarkAvg = Math.floor(
-    reviewData.TotalReviewItems.Items.reduce(
-      (acc, review) => acc + review.Evaluation,
-      0
-    ) / reviewCount
-  );
-
-  const usersData = await query({
-    key: 'users',
-    url: '/data/users/users.json',
   });
 
-  const targetUser = usersData.users.find(
-    (user) => user.email === loginUser.email
-  );
+  const createdReview = await newReview.save();
 
-  targetUser.reviewList.push(reviewId);
+  const targetUser = await User.findOne({ id: loginUser.id });
+  targetUser.reviewList = [...targetUser.reviewList, createdReview.ReviewID];
+  await targetUser.save();
 
-  res.status(200).json(newReview);
+  res.status(201).json(createdReview);
 };
 
 // @desc    Delete review
