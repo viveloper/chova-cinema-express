@@ -155,30 +155,22 @@ exports.deleteReview = async (req, res, next) => {
 // @access  Private
 exports.editReview = async (req, res, next) => {
   const reviewId = parseInt(req.params.reviewId);
-  const { movieCode, text, score, toggleLike } = req.body;
+  const { text, score, toggleLike } = req.body;
+  const loginUser = req.user;
 
-  const reviewData = await query({
-    key: `review/${movieCode}`,
-    url: `/data/movieDetail/${movieCode}-review.json`,
-  });
+  const targetReview = await Review.findOne({ ReviewID: reviewId });
 
-  const targetReview = reviewData.TotalReviewItems.Items.find(
-    (item) => item.ReviewID === reviewId
-  );
+  if (targetReview.MemberID !== loginUser.id) {
+    return res.status(401).json({
+      message: 'Not authorized user',
+    });
+  }
 
   targetReview.ReviewText = text ? text : targetReview.ReviewText;
   targetReview.Evaluation = score ? score : targetReview.Evaluation;
+
   if (toggleLike) {
-    const loginUser = req.user;
-
-    const usersData = await query({
-      key: 'users',
-      url: '/data/users/users.json',
-    });
-    const targetUser = usersData.users.find(
-      (user) => user.email === loginUser.email
-    );
-
+    const targetUser = await User.findOne({ id: loginUser.id });
     const isLiked = targetUser.reviewLikeList.includes(reviewId);
 
     targetReview.RecommandCount = isLiked
@@ -190,20 +182,11 @@ exports.editReview = async (req, res, next) => {
         (item) => item !== reviewId
       );
     } else {
-      targetUser.reviewLikeList.push(reviewId);
+      targetUser.reviewLikeList = [...targetUser.reviewLikeList, reviewId];
     }
+    await targetUser.save();
   }
-
-  reviewData.ReviewCounts.MarkAvg = Math.floor(
-    reviewData.TotalReviewItems.Items.reduce(
-      (acc, review) => acc + review.Evaluation,
-      0
-    ) / reviewData.TotalReviewItems.Items.length
-  );
+  await targetReview.save();
 
   res.status(200).json({ success: true, review: targetReview });
 };
-
-// @desc    Recommend review
-// @route   PUT /api/review
-// @access  Private
