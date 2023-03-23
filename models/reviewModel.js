@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const reviewSchema = mongoose.Schema({
   ReviewID: {
     type: 'Number',
+    required: true,
+    unique: true,
   },
   MemberNo: {
     type: 'Number',
