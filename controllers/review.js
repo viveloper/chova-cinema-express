@@ -43,6 +43,10 @@ exports.getReview = async (req, res, next) => {
     .exec();
 
   let copiedReviews = [...reviews];
+  copiedReviews = copiedReviews.map((review) => ({
+    ...review._doc,
+    MemberRecommandYN: 'N',
+  }));
 
   const loginUser = req.user;
   if (loginUser) {
