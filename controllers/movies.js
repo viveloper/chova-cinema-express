@@ -1,4 +1,5 @@
 const Movie = require('../models/movieModel.js');
+const Review = require('../models/reviewModel.js');
 
 const ARTE_MOVIE_CODE_LIST = [
   16079, 16076, 15964, 16232, 16176, 15600, 16056, 16106, 12869, 16233, 16132,
@@ -62,45 +63,65 @@ exports.getMovies = async (req, res, next) => {
 exports.getMovieDetail = async (req, res, next) => {
   const movieCode = req.params.movieCode;
 
-  if (movieCode) {
-    const movies = await Movie.find({
-      RepresentationMovieCode: movieCode,
-    }).exec();
-    if (!movies.length) {
-      return res.status(404).json({
-        message: 'Not Found.',
-      });
-    }
-    const movie = movies[0];
-    return res.status(200).json({
-      movieCode: movie.RepresentationMovieCode,
-      movieName: movie.MovieNameKR,
-      posterUrl: movie.PosterURL,
-      viewEvaluation: movie.ViewEvaluation,
-      bookingRate: movie.BookingRate,
-      dday: Number(movie.DDay),
-      moviePlayYN: movie.MoviePlayYN,
-      viewGradeCode: movie.ViewGradeCode,
-      cumulativeAudience: movie.KOFCustCnt,
-      likeCount: movie.LikeCount,
-      playTime: movie.PlayTime,
-      genreName: movie.MovieGenreNameKR,
-      genreName2: movie.MovieGenreNameKR2,
-      makingNationName: movie.MakingNationNameKR,
-      releaseDate: movie.ReleaseDate,
-      synopsis: movie.SynopsisKR,
-      manPrefer: Number(movie.ManPrefer),
-      womanPrefer: Number(movie.WomanPrefer),
-      agePrefer10: Number(movie.AgePrefer10),
-      agePrefer20: Number(movie.AgePrefer20),
-      agePrefer30: Number(movie.AgePrefer30),
-      agePrefer40: Number(movie.AgePrefer40),
-      casting: movie.Casting,
-      trailer: movie.Trailer,
-    });
-  } else {
-    res.status(400).json({
+  if (!movieCode) {
+    return res.status(400).json({
       message: 'required movieCode.',
     });
   }
+
+  const movies = await Movie.find({
+    RepresentationMovieCode: movieCode,
+  }).exec();
+
+  if (!movies.length) {
+    return res.status(404).json({
+      message: 'Not Found.',
+    });
+  }
+  const movie = movies[0];
+
+  const aggregatedReviews = await Review.aggregate()
+    .match({ RepresentationMovieCode: movieCode })
+    .group({
+      _id: '$RepresentationMovieCode',
+      viewEvaluation: { $avg: '$Evaluation' },
+      reviewCount: { $sum: 1 },
+    })
+    .exec();
+
+  const viewEvaluation =
+    aggregatedReviews.length === 0
+      ? 0
+      : Number(aggregatedReviews[0].viewEvaluation.toFixed(1));
+
+  const reviewCount =
+    aggregatedReviews.length === 0 ? 0 : aggregatedReviews[0].reviewCount;
+
+  return res.status(200).json({
+    movieCode: movie.RepresentationMovieCode,
+    movieName: movie.MovieNameKR,
+    posterUrl: movie.PosterURL,
+    viewEvaluation,
+    bookingRate: movie.BookingRate,
+    dday: Number(movie.DDay),
+    moviePlayYN: movie.MoviePlayYN,
+    viewGradeCode: movie.ViewGradeCode,
+    cumulativeAudience: movie.KOFCustCnt,
+    likeCount: movie.LikeCount,
+    playTime: movie.PlayTime,
+    genreName: movie.MovieGenreNameKR,
+    genreName2: movie.MovieGenreNameKR2,
+    makingNationName: movie.MakingNationNameKR,
+    releaseDate: movie.ReleaseDate,
+    synopsis: movie.SynopsisKR,
+    manPrefer: Number(movie.ManPrefer),
+    womanPrefer: Number(movie.WomanPrefer),
+    agePrefer10: Number(movie.AgePrefer10),
+    agePrefer20: Number(movie.AgePrefer20),
+    agePrefer30: Number(movie.AgePrefer30),
+    agePrefer40: Number(movie.AgePrefer40),
+    casting: movie.Casting,
+    trailer: movie.Trailer,
+    reviewCount,
+  });
 };

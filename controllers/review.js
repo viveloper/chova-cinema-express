@@ -1,5 +1,3 @@
-const { getRandomInt } = require('../utils');
-const { query } = require('../api');
 const Review = require('../models/reviewModel.js');
 const User = require('../models/userModel.js');
 
