@@ -170,6 +170,12 @@ exports.editReview = async (req, res, next) => {
   targetReview.Evaluation = score ? score : targetReview.Evaluation;
 
   if (toggleLike) {
+    if (targetReview.MemberID === loginUser.id) {
+      return res.status(400).json({
+        message: '자신의 리뷰는 추천 할 수 없습니다.',
+      });
+    }
+
     const targetUser = await User.findOne({ id: loginUser.id });
     const isLiked = targetUser.reviewLikeList.includes(reviewId);
 
