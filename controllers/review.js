@@ -26,7 +26,7 @@ exports.getReview = async (req, res, next) => {
 
   const reviews = await Review.find({ RepresentationMovieCode: movieCode })
     .select(
-      'ReviewID MemberID MemberName ReviewText Evaluation RecommandCount RepresentationMovieCode RegistDate MemberNickName'
+      'ReviewID MemberID MemberName ReviewText Evaluation RecommandCount RepresentationMovieCode RegistDate MemberNickName MemberRecommandYN'
     )
     .sort(sortType === 'like' ? { RecommandCount: -1 } : { ReviewID: -1 })
     .skip((page - 1) * count)
@@ -42,22 +42,30 @@ exports.getReview = async (req, res, next) => {
     })
     .exec();
 
+  let copiedReviews = [...reviews];
+
   const loginUser = req.user;
   if (loginUser) {
-    const userReview = reviews.find(
+    const userReview = copiedReviews.find(
       (review) => review.MemberID === loginUser.id
     );
     if (userReview) {
-      const idx = reviews.indexOf(userReview);
-      reviews.splice(idx, 1);
-      reviews.unshift(userReview);
+      const targetUser = await User.findOne({ id: loginUser.id });
+      copiedReviews = [
+        userReview,
+        ...copiedReviews.filter((review) => review.MemberID !== loginUser.id),
+      ].map((review) =>
+        targetUser.reviewLikeList.includes(review.ReviewID)
+          ? { ...review._doc, MemberRecommandYN: 'Y' }
+          : { ...review._doc, MemberRecommandYN: 'N' }
+      );
     }
   }
 
   res.status(200).json({
     page,
-    reviews,
-    pageCount: reviews.length,
+    reviews: copiedReviews,
+    pageCount: copiedReviews.length,
     totalCount:
       aggregatedReviews.length === 0 ? 0 : aggregatedReviews[0].totalCount,
     scoreAvg:
