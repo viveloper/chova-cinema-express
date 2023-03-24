@@ -42,9 +42,16 @@ exports.getReview = async (req, res, next) => {
     })
     .exec();
 
-  let copiedReviews = [...reviews];
-  copiedReviews = copiedReviews.map((review) => ({
-    ...review._doc,
+  let copiedReviews = reviews.map((review) => ({
+    ReviewID: review.ReviewID,
+    MemberID: review.MemberID,
+    MemberName: review.MemberName,
+    ReviewText: review.ReviewText,
+    Evaluation: review.Evaluation,
+    RecommandCount: review.RecommandCount,
+    RepresentationMovieCode: review.RepresentationMovieCode,
+    RegistDate: review.RegistDate,
+    MemberNickName: review.MemberNickName,
     MemberRecommandYN: 'N',
   }));
 
@@ -60,8 +67,8 @@ exports.getReview = async (req, res, next) => {
         ...copiedReviews.filter((review) => review.MemberID !== loginUser.id),
       ].map((review) =>
         targetUser.reviewLikeList.includes(review.ReviewID)
-          ? { ...review._doc, MemberRecommandYN: 'Y' }
-          : { ...review._doc, MemberRecommandYN: 'N' }
+          ? { ...review, MemberRecommandYN: 'Y' }
+          : { ...review, MemberRecommandYN: 'N' }
       );
     }
   }
